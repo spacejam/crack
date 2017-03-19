@@ -1,0 +1,9 @@
+[package]
+name = "peer"
+version = "0.1.0"
+authors = ["Tyler Neely <t@jujit.su>"]
+license = "Apache-2.0"
+homepage = "https://github.com/spacejam/peer"
+keywords = ["testing", "HA", "reliable", "distributed-systems", "raft"]
+
+[dependencies]
