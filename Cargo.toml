@@ -1,5 +1,6 @@
 [package]
 name = "peer"
+description = "Quickly build and test reliable distributed systems."
 version = "0.1.0"
 authors = ["Tyler Neely <t@jujit.su>"]
 license = "Apache-2.0"
