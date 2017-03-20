@@ -1,10 +1,21 @@
 [package]
 name = "peer"
-description = "Quickly build and test reliable distributed systems."
+description = "building blocks and testing tools for reliable distributed systems"
 version = "0.1.0"
 authors = ["Tyler Neely <t@jujit.su>"]
 license = "Apache-2.0"
 homepage = "https://github.com/spacejam/peer"
-keywords = ["testing", "HA", "reliable", "distributed-systems", "raft"]
+keywords = ["testing", "consensus", "gossip", "distributed-systems", "services"]
+documentation = "https://docs.rs/peer"
 
 [dependencies]
+time = "0.1"
+crdts = "1.2"
+tokio-core = "0.1"
+rustc-serialize = "0.3"
+bincode = "0.6"
+crossbeam = "0.2"
+
+[dev-dependencies]
+quickcheck = "0.2"
+rand = "0.3"
