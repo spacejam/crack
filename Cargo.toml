@@ -11,10 +11,13 @@ documentation = "https://docs.rs/peer"
 [dependencies]
 time = "0.1"
 crdts = "1.2"
-tokio-core = "0.1"
 rustc-serialize = "0.3"
 bincode = "0.6"
 crossbeam = "0.2"
+tokio-core = "0.1.6"
+tokio-io = "0.1.0"
+mio = "0.6.5"
+bytes = "0.4"
 
 [dev-dependencies]
 quickcheck = "0.2"

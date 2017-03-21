@@ -10,8 +10,8 @@ pub struct Peer {
 
 pub trait Kernel {
     fn peers(&self) -> Vec<Peer>;
-    fn ping(&mut self, Peer) -> Result<(), ()>;
-    fn purge(&mut self, Peer);
+    fn ping(&self, Peer) -> Result<(), ()>;
+    fn purge(&self, Peer);
 }
 
 pub struct K {
@@ -25,7 +25,7 @@ impl Default for K {
 }
 
 impl K {
-    fn cron(&mut self) {
+    fn cron(&self) {
         // for
     }
 }
@@ -35,11 +35,11 @@ impl Kernel for K {
         vec![]
     }
 
-    fn ping(&mut self, peer: Peer) -> Result<(), ()> {
+    fn ping(&self, peer: Peer) -> Result<(), ()> {
         Ok(())
     }
 
-    fn purge(&mut self, peer: Peer) {}
+    fn purge(&self, peer: Peer) {}
 }
 
 #[cfg(test)]
