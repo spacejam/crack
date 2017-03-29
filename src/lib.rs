@@ -1,8 +1,18 @@
 #![allow(unused)]
+extern crate bytes;
+extern crate log;
+extern crate env_logger;
 extern crate rustc_serialize;
 extern crate bincode;
 extern crate time;
 extern crate crossbeam;
+extern crate tokio_core;
+extern crate futures;
+extern crate serde_json;
+extern crate rand;
+extern crate tokio_timer;
+extern crate tokio_io;
+extern crate uuid;
 
 use bincode::SizeLimit;
 use bincode::rustc_serialize::{encode, decode, DecodingResult};
@@ -10,6 +20,44 @@ use rustc_serialize::{Encodable, Decodable};
 
 mod clock;
 mod crc16;
+
+// TODO
+// let rx = "127.0.0.1:8080".inbox<Msgtype>().unwrap();
+// let tx = "1.2.3.4:5".outbox<MsgType>();
+// means Into<Peer> for SockAddr
+
+#[macro_export]
+macro_rules! codec_boilerplate {
+    ($($T:ty),*) => {
+        $(
+            impl Decoder for $T {
+                type Item = $T;
+                type Error = io::Error;
+
+                fn decode(&mut self, buf: &mut BytesMut) -> io::Result<Option<$T>> {
+                    println!("decoding message");
+                    decode(&buf.take()[..])
+                        .map(|v| {
+                            println!("successfully decoded {:?}", v);
+                            Some(v)
+                        })
+                        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+                }
+            }
+
+            impl Encoder for $T {
+                type Item = $T;
+                type Error = io::Error;
+
+                fn encode(&mut self, msg: $T, buf: &mut BytesMut) -> io::Result<()> {
+                    println!("encoding message");
+                    buf.put(encode(&msg, SizeLimit::Infinite).unwrap());
+                    Ok(())
+                }
+            }
+        )*
+    };
+}
 
 pub mod transport;
 pub mod kernel;
@@ -46,10 +94,4 @@ pub fn usize_to_array(u: usize) -> [u8; 4] {
 pub fn array_to_usize(ip: [u8; 4]) -> usize {
     ((ip[0] as usize) << 24) as usize + ((ip[1] as usize) << 16) as usize +
     ((ip[2] as usize) << 8) as usize + (ip[3] as usize)
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {}
 }

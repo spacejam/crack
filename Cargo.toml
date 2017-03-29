@@ -14,11 +14,22 @@ crdts = "1.2"
 rustc-serialize = "0.3"
 bincode = "0.6"
 crossbeam = "0.2"
-tokio-core = "0.1.6"
-tokio-io = "0.1.0"
 mio = "0.6.5"
+futures = "0.1"
+tokio-core = "0.1"
+tokio-timer = { git = "https://github.com/sirpent-team/tokio-timer", branch = "traits" }
+tokio-io = "0.1"
 bytes = "0.4"
+log = "0.3"
+env_logger = "0.4"
+uuid = { version = "0.4", features = ["v4", "serde"] }
+rand = "0.3"
+serde = "0.9"
+serde_json = "0.9"
+serde_derive = "0.9"
+error-chain = "0.9"
+comms = { git = "https://github.com/sirpent-team/comms", branch = "master" }
+
 
 [dev-dependencies]
 quickcheck = "0.2"
-rand = "0.3"
