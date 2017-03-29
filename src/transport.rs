@@ -1,11 +1,12 @@
 use std::convert;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::io;
 use std::iter;
 use std::str;
 use std::marker::PhantomData;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use std::thread;
 
 use crossbeam::sync::MsQueue;
@@ -13,7 +14,6 @@ use futures::sync::mpsc;
 use tokio_core::net::{TcpListener, TcpStream};
 use tokio_core::reactor::{Core, Handle};
 use rustc_serialize::{Encodable, Decodable};
-
 use bincode::SizeLimit;
 use bincode::rustc_serialize::{encode, decode, DecodingResult};
 use serde_json;
@@ -27,15 +27,66 @@ use uuid::Uuid;
 use {to_binary, from_binary};
 use kernel::Peer;
 
-trait Transport<Req, Res, E>: Sized {
-    fn rx(&self) -> MsQueue<(Peer, Res)>;
-    fn tx(&self) -> MsQueue<(Peer, Req)>;
-    fn shutdown(self);
+trait Transport<Addr, Rx, Tx>: Sized {
+    fn rx(&self) -> Arc<MsQueue<(Addr, Rx)>>;
+    fn tx(&self) -> Arc<MsQueue<(Addr, Tx)>>;
+    fn shutdown(self) {}
 }
 
+struct TCPTransport<Rx, Tx> {
+    rx: Arc<MsQueue<(SocketAddr, Rx)>>,
+    tx: Arc<MsQueue<(SocketAddr, Tx)>>,
+    connections: Arc<RwLock<HashMap<SocketAddr, mpsc::UnboundedSender<Tx>>>>,
+}
 
+impl<Rx, Tx> TCPTransport<Rx, Tx>
+    where Rx: Decodable + Send + 'static,
+          Tx: Encodable + Send + 'static
+{
+    pub fn new(addr: SocketAddr) -> TCPTransport<Rx, Tx> {
+        let msgs = Arc::new(MsQueue::new());
+        let msgs2 = msgs.clone();
 
-fn recv<T>(raw_addr: String) -> Arc<MsQueue<(SocketAddr, T)>>
+        let connections = Arc::new(RwLock::new(HashMap::new()));
+        let connections2 = connections.clone();
+
+        thread::spawn(move || {
+            loop {
+                let (addr, msg): (SocketAddr, Tx) = msgs2.pop();
+                let connections = connections2.read().unwrap();
+                if let Some(tx) = connections.get(&addr) {
+                    let tx: &mpsc::UnboundedSender<Tx> = tx;
+                    tx.send(msg).unwrap();
+                    continue;
+                }
+                drop(connections);
+
+                let tx = send(addr.clone());
+                tx.clone().send(msg).wait().unwrap();
+                let mut connections = connections2.write().unwrap();
+                connections.insert(addr, tx);
+            }
+        });
+
+        TCPTransport {
+            rx: recv(addr),
+            tx: msgs.clone(),
+            connections: connections.clone(),
+        }
+    }
+}
+
+impl<Rx, Tx> Transport<SocketAddr, Rx, Tx> for TCPTransport<Rx, Tx> {
+    fn rx(&self) -> Arc<MsQueue<(SocketAddr, Rx)>> {
+        self.rx.clone()
+    }
+
+    fn tx(&self) -> Arc<MsQueue<(SocketAddr, Tx)>> {
+        self.tx.clone()
+    }
+}
+
+fn recv<T>(addr: SocketAddr) -> Arc<MsQueue<(SocketAddr, T)>>
     where T: Decodable + Send + 'static
 {
 
@@ -46,7 +97,6 @@ fn recv<T>(raw_addr: String) -> Arc<MsQueue<(SocketAddr, T)>>
         let mut core = Core::new().unwrap();
         let handle = core.handle();
 
-        let addr = raw_addr.parse::<SocketAddr>().unwrap();
         let listener = TcpListener::bind(&addr, &handle).unwrap();
 
         let server = listener.incoming().for_each(move |(socket, addr)| {
@@ -75,7 +125,7 @@ fn recv<T>(raw_addr: String) -> Arc<MsQueue<(SocketAddr, T)>>
     msgs
 }
 
-fn send<T>(raw_addr: String) -> mpsc::UnboundedSender<T>
+fn send<T>(addr: SocketAddr) -> mpsc::UnboundedSender<T>
     where T: Encodable + Send + 'static
 {
     let (outbound_tx, outbound_rx) = mpsc::unbounded();
@@ -86,7 +136,6 @@ fn send<T>(raw_addr: String) -> mpsc::UnboundedSender<T>
         let handle = core.handle();
 
 
-        let addr = raw_addr.parse::<SocketAddr>().unwrap();
         let tcp = TcpStream::connect(&addr, &handle);
 
         let client = tcp.and_then(move |socket| {
@@ -118,8 +167,9 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let rx = recv::<Msg>("127.0.0.1:8080".to_owned());
-        let ref mut tx = &mut send::<Msg>("127.0.0.1:8080".to_owned());
+        let rx = recv::<Msg>("127.0.0.1:8080".parse().unwrap());
+        thread::sleep_ms(300);
+        let ref mut tx = &mut send::<Msg>("127.0.0.1:8080".parse().unwrap());
         for i in 1..4 {
             let msg = Msg { inner: i };
             println!("sending msg: {:?}", msg);

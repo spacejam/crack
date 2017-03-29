@@ -1,5 +1,5 @@
-#![allow(unused)]
 extern crate bytes;
+#[macro_use]
 extern crate log;
 extern crate env_logger;
 extern crate rustc_serialize;
@@ -21,13 +21,10 @@ use rustc_serialize::{Encodable, Decodable};
 mod clock;
 mod crc16;
 
-// TODO
-// let rx = "127.0.0.1:8080".inbox<Msgtype>().unwrap();
-// let tx = "1.2.3.4:5".outbox<MsgType>();
-// means Into<Peer> for SockAddr
-
 pub mod transport;
 pub mod kernel;
+pub mod fsm;
+// pub mod net;
 
 pub use clock::{Clock, RealClock, TestClock};
 use crc16::{crc16_arr, crc16};
