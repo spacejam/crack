@@ -26,39 +26,6 @@ mod crc16;
 // let tx = "1.2.3.4:5".outbox<MsgType>();
 // means Into<Peer> for SockAddr
 
-#[macro_export]
-macro_rules! codec_boilerplate {
-    ($($T:ty),*) => {
-        $(
-            impl Decoder for $T {
-                type Item = $T;
-                type Error = io::Error;
-
-                fn decode(&mut self, buf: &mut BytesMut) -> io::Result<Option<$T>> {
-                    println!("decoding message");
-                    decode(&buf.take()[..])
-                        .map(|v| {
-                            println!("successfully decoded {:?}", v);
-                            Some(v)
-                        })
-                        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
-                }
-            }
-
-            impl Encoder for $T {
-                type Item = $T;
-                type Error = io::Error;
-
-                fn encode(&mut self, msg: $T, buf: &mut BytesMut) -> io::Result<()> {
-                    println!("encoding message");
-                    buf.put(encode(&msg, SizeLimit::Infinite).unwrap());
-                    Ok(())
-                }
-            }
-        )*
-    };
-}
-
 pub mod transport;
 pub mod kernel;
 

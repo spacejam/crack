@@ -33,10 +33,10 @@ trait Transport<Req, Res, E>: Sized {
     fn shutdown(self);
 }
 
-fn recv<T>(raw_addr: String) -> Arc<MsQueue<(SocketAddr, <T as Decoder>::Item)>>
-    where T: Default + Decoder + Encoder + 'static,
-          <T as Decoder>::Item: Send + Debug,
-          <T as Encoder>::Item: Send
+
+
+fn recv<T>(raw_addr: String) -> Arc<MsQueue<(SocketAddr, T)>>
+    where T: Decodable + Send + 'static
 {
 
     let msgs = Arc::new(MsQueue::new());
@@ -53,10 +53,9 @@ fn recv<T>(raw_addr: String) -> Arc<MsQueue<(SocketAddr, <T as Decoder>::Item)>>
             println!("got a new connection from {:?}", addr);
             let msgs3 = msgs2.clone();
 
-
-            let deframed = length_delimited::FramedRead::new(socket).with(T::default());
-            let mut codec = T::default();
-            let rx = deframed.with(|mut buf| codec.decode(&mut buf));
+            let deframed = length_delimited::FramedRead::new(socket);
+            let rx = deframed.map_err(|e| panic!(e))
+                .and_then(|buf| decode(&buf).map_err(|e| panic!(e)));
 
             let pusher = rx.for_each(move |msg| {
                     msgs3.push((addr, msg));
@@ -76,13 +75,10 @@ fn recv<T>(raw_addr: String) -> Arc<MsQueue<(SocketAddr, <T as Decoder>::Item)>>
     msgs
 }
 
-fn send<T>(raw_addr: String) -> mpsc::Sender<<T as Encoder>::Item>
-    where T: Default + Decoder + Encoder + 'static,
-          <T as Decoder>::Item: Send,
-          <T as Encoder>::Item: Send,
-          io::Error: convert::From<<T as Encoder>::Error>
+fn send<T>(raw_addr: String) -> mpsc::UnboundedSender<T>
+    where T: Encodable + Send + 'static
 {
-    let (outbound_tx, outbound_rx) = mpsc::channel(0);
+    let (outbound_tx, outbound_rx) = mpsc::unbounded();
 
     thread::spawn(move || {
 
@@ -94,24 +90,27 @@ fn send<T>(raw_addr: String) -> mpsc::Sender<<T as Encoder>::Item>
         let tcp = TcpStream::connect(&addr, &handle);
 
         let client = tcp.and_then(move |socket| {
-            let (sink, _stream) = socket.framed(T::default()).split();
-            // let mut transport = length_delimited::Framed::new(sink);
-            outbound_rx.map_err(|e| panic!(e)).forward(sink)
+            let framed = length_delimited::FramedWrite::new(socket);
+            outbound_rx.map(|msg| encode(&msg, SizeLimit::Infinite).unwrap())
+                .map_err(|e| panic!(e))
+                .forward(framed)
         });
 
+        // let reconnector = future::loop_fn(client, |client| client);
+
         core.run(client).unwrap();
+
+        println!("sender exiting");
 
     });
 
     outbound_tx
 }
 
-#[derive(Clone, Debug, Default, RustcEncodable, RustcDecodable)]
+#[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct Msg {
     inner: u64,
 }
-
-codec_boilerplate!(Msg);
 
 #[cfg(test)]
 mod tests {
