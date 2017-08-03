@@ -1,29 +1,12 @@
-# peer :globe_with_meridians:
+# crack :zap:
 
-quickly build and test reliable distributed systems
-
-inspiration from:
-
-* erlang OTP
-* FoundationDB's dev process
-* riak's dev process
-* voltdb's dev process
-* NASA's Apollo engineering process
-
-## primitives
-
-- [ ] broadcast
-- [ ] partition simulation
-- [ ] consensus
-- [ ] membership
-- [ ] liveness
-- [ ] gossip
+verify distributed and lock-free algorithms through symbolic execution
 
 ## appendix: philosophy of reliable engineering
 
 for large stateful systems, extra specification up-front saves tremendous effort overall
 
-1. use TLA+ to model whether core algorithms satisfy desired safety properties
+1. TLA+ is useful, but it's costly to learn. we use this to bridge the gap
 1. cleanroom methodology: specify the intended behavior of ALL nontrivial blocks
 1. simulate asynchronous network conditions by delivering messages {on time, late, never}
    in a test harness that explores different paths (either generative or

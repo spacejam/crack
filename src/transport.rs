@@ -1,8 +1,10 @@
 use std::convert;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::io;
 use std::iter;
+use std::rc::Rc;
 use std::str;
 use std::marker::PhantomData;
 use std::net::SocketAddr;
@@ -134,7 +136,6 @@ fn send<T>(addr: SocketAddr) -> mpsc::UnboundedSender<T>
 
         let mut core = Core::new().unwrap();
         let handle = core.handle();
-
 
         let tcp = TcpStream::connect(&addr, &handle);
 

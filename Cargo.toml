@@ -1,12 +1,12 @@
 [package]
-name = "peer"
-description = "building blocks and testing tools for reliable distributed systems"
+name = "crack"
+description = "verify distributed and lock-free algorithms through symbolic execution"
 version = "0.1.0"
 authors = ["Tyler Neely <t@jujit.su>"]
 license = "Apache-2.0"
-homepage = "https://github.com/spacejam/peer"
-keywords = ["testing", "consensus", "gossip", "distributed-systems", "services"]
-documentation = "https://docs.rs/peer"
+homepage = "https://github.com/spacejam/crack"
+keywords = ["testing", "consensus", "formal-methods", "distributed-systems", "symbolic-execution"]
+documentation = "https://docs.rs/crack"
 
 [dependencies]
 time = "0.1"
@@ -17,7 +17,6 @@ crossbeam = "0.2"
 mio = "0.6.5"
 futures = "0.1"
 tokio-core = "0.1"
-tokio-timer = { git = "https://github.com/sirpent-team/tokio-timer", branch = "traits" }
 tokio-io = "0.1"
 bytes = "0.4"
 log = "0.3"
@@ -28,8 +27,6 @@ serde = "0.9"
 serde_json = "0.9"
 serde_derive = "0.9"
 error-chain = "0.9"
-comms = { git = "https://github.com/sirpent-team/comms", branch = "master" }
-
 
 [dev-dependencies]
 quickcheck = "0.2"

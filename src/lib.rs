@@ -10,7 +10,6 @@ extern crate tokio_core;
 extern crate futures;
 extern crate serde_json;
 extern crate rand;
-extern crate tokio_timer;
 extern crate tokio_io;
 extern crate uuid;
 
@@ -20,10 +19,10 @@ use rustc_serialize::{Encodable, Decodable};
 
 mod clock;
 mod crc16;
-
-pub mod transport;
-pub mod kernel;
-pub mod fsm;
+mod transport;
+mod kernel;
+mod fsm;
+mod model;
 // pub mod net;
 
 pub use clock::{Clock, RealClock, TestClock};
