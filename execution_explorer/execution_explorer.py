@@ -64,7 +64,7 @@ interesting = [
         ]
 
 # this is the file that is incrementally built to record explored paths
-state_file = 'execution_explorer.py'
+state_file = 'execution_explorer.state.json'
 
 # uncomment this to output the specific commands issued to gdb
 gdb.execute('set trace-commands on')
@@ -124,8 +124,8 @@ class DeterministicExecutor:
     def load(self):
         # try to load previous state
         try:
-            with open(state_file, 'r') as state_file:
-                self.state = json.loads(state_file.read())
+            with open(state_file, 'r') as sf:
+                self.state = json.loads(sf.read())
                 if 'seed' in self.state:
                     self.seed = self.state['seed']
                 print("loaded existing state, continuing where it left off")
@@ -135,8 +135,8 @@ class DeterministicExecutor:
 
     def save(self):
         try:
-            with open(state_file, 'tw') as state_file:
-                state_file.write(json.dumps(self.state))
+            with open(state_file, 'tw') as sf:
+                sf.write(json.dumps(self.state))
         except Exception as e:
             print("unable to open, write or serialize state to file:", e)
             pass
