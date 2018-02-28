@@ -1,0 +1,8 @@
+[package]
+name = "crack"
+version = "0.1.0"
+description = "execution interleaving tester"
+authors = ["Tyler Neely <t@jujit.su>"]
+
+[dependencies]
+rand = "0.4"
