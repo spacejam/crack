@@ -1,0 +1,6 @@
+[package]
+name = "complex_race"
+version = "0.1.0"
+authors = ["Tyler Neely <t@jujit.su>"]
+
+[dependencies]
