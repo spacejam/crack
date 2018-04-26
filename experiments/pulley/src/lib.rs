@@ -115,7 +115,7 @@ where
     }
 
     pub fn run_with_seed(&self, seed: usize) {
-        //println!("----- seeding with {}", seed);
+        println!("----- seeding with {}", seed);
         let mut rng = StdRng::from_seed(&[seed]);
 
         // initialize threads
@@ -147,7 +147,7 @@ where
         // pick a random one until all are done
         while !sched_handles.is_empty() {
             let choice: usize = rng.gen_range(0, sched_handles.len());
-            println!("choice: {}", choice);
+            // println!("choice: {}", choice);
             let should_drop = {
                 let sh = &sched_handles[choice];
                 sh.to_thread.send(()).unwrap();

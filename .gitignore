@@ -6,7 +6,6 @@ perf*
 *svg
 *log
 *txt
-experiments
 target
 Cargo.lock
 *swp

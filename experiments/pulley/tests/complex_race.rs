@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate crack;
 
+use crack::{Mutex, AtomicUsize};
 use std::cell::UnsafeCell;
 use std::sync::Mutex;
 
@@ -83,6 +84,6 @@ fn complex_race() {
     scheduler.add(t2);
     scheduler.add(t3);
 
-    scheduler.run_with_seed(20852);
-    // scheduler.explore();
+    // scheduler.run_with_seed(20852);
+    scheduler.explore();
 }
