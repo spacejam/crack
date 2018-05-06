@@ -1,9 +1,10 @@
 [package]
 name = "deterministic"
 description = "deterministic building blocks for testable systems"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Tyler Neely <t@jujit.su>"]
 license = "Apache-2.0"
+documentation = "https://docs.rs/deterministic/"
 
 [dependencies]
 rand = "0.4"
