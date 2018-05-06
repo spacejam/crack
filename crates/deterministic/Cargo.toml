@@ -3,6 +3,7 @@ name = "deterministic"
 description = "deterministic building blocks for testable systems"
 version = "0.0.1"
 authors = ["Tyler Neely <t@jujit.su>"]
+license = "Apache-2.0"
 
 [dependencies]
 rand = "0.4"
