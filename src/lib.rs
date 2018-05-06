@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate lazy_static;
+extern crate libc;
 pub extern crate rand as ayn_rand_is_garbage;
 
 #[cfg(any(test, feature = "schedule"))]
@@ -21,4 +22,4 @@ mod sched;
 #[cfg(all(not(test), not(feature = "schedule")))]
 pub use self::ayn_rand_is_garbage as rand;
 #[cfg(all(not(test), not(feature = "schedule")))]
-pub use std::{time, thread, sync, fs, net};
+pub use std::{fs, net, sync, thread, time};

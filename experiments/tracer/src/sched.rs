@@ -1,63 +1,91 @@
-use libc::{c_int, syscall, SYS_gettid, pid_t,
-           /* sched_yield, */ sched_setscheduler, sched_param, SCHED_FIFO};
-use std::os::unix::thread::JoinHandleExt;
-use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
+use std::{io, mem};
+use std::thread::{self, JoinHandle};
 
-fn gettid() -> pid_t {
-    unsafe { syscall(SYS_gettid) as pid_t }
+use libc::{CPU_SET, CPU_ZERO, SCHED_FIFO, c_int, cpu_set_t,
+           sched_get_priority_max, sched_get_priority_min, sched_param,
+           sched_setaffinity, sched_setscheduler};
+use rand::{Rng, StdRng};
+
+const POLICY: c_int = SCHED_FIFO;
+
+fn prioritize(prio: c_int) {
+    pin_cpu();
+
+    let param = sched_param {
+        sched_priority: prio,
+    };
+    let ret =
+        unsafe { sched_setscheduler(0, POLICY, &param as *const sched_param) };
+
+    assert_eq!(
+        ret,
+        0,
+        "setscheduler is expected to return zero, was {}: {:?}",
+        ret,
+        io::Error::last_os_error()
+    );
+
+    thread::yield_now();
 }
 
-fn setscheduler(policy: c_int, priority: c_int) {
-    let param = sched_param { sched_priority: priority };
-    let tid = gettid();
+fn pin_cpu() {
     unsafe {
-        sched_setscheduler(tid, policy, &param as *const sched_param);
+        let mut cpu_set: cpu_set_t = mem::zeroed();
+        CPU_ZERO(&mut cpu_set);
+        CPU_SET(0, &mut cpu_set);
+        let ret = sched_setaffinity(0, 1, &cpu_set as *const cpu_set_t);
+        assert_eq!(
+            ret,
+            0,
+            "sched_setaffinity is expected to return 0, was {}: {:?}",
+            ret,
+            io::Error::last_os_error()
+        );
     }
 }
 
-fn prioritize() {
-    static PRIO: AtomicUsize = ATOMIC_USIZE_INIT;
-    let prio = PRIO.fetch_add(1, Ordering::Relaxed) as c_int;
-    setscheduler(SCHED_FIFO, prio);
-}
+pub fn spawn_rt<R: Rng, F, T>(rng: &mut R, f: F) -> JoinHandle<T>
+    where F: FnOnce() -> T,
+          F: Send + 'static,
+          T: Send + 'static
+{
+    let min = unsafe { sched_get_priority_min(POLICY) };
+    let max = unsafe { sched_get_priority_max(POLICY) };
 
-#[macro_export]
-macro_rules! deterministic {
-    ($($thread:expr),*) => {
-        let mut threads = vec![];
-        $(
-            prioritize();
-            let thread = thread::spawn(|| {
-                prioritize();
-                $thread
-            });
-            threads.push(thread);
-        )*
-        for thread in threads.into_iter() {
-            thread.join().unwrap();
-        }
-    };
-    ($($thread:expr,)*) => {
-        deterministic!($($thread),*)
-    };
+    prioritize(rng.gen_range(min, max));
+
+    let prio = rng.gen_range(min, max);
+    thread::spawn(move || {
+        prioritize(prio);
+
+        f()
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::sync::{Arc, Mutex};
-    use std::thread;
+
+    use rand::{SeedableRng, StdRng};
 
     #[test]
     fn determined() {
         let l = Arc::new(Mutex::new(()));
         let l1 = l.clone();
 
-        deterministic! {
-            t1(l1),
-            t2(l),
-            t3(),
-        };
+        let seed: &[_] = &[0];
+        let mut rng: StdRng = SeedableRng::from_seed(seed);
+
+        let threads = vec![
+            spawn_rt(&mut rng, || t1(l)),
+            spawn_rt(&mut rng, || t2(l1)),
+            spawn_rt(&mut rng, || t3()),
+        ];
+
+        for t in threads.into_iter() {
+            t.join().unwrap();
+        }
     }
 
     static mut X: u8 = 0;

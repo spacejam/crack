@@ -4,6 +4,11 @@ use std::time::Duration;
 
 use sched::SCHEDULER;
 
+#[cfg(target_os = "linux")]
+mod spawn;
+#[cfg(target_os = "linux")]
+pub use self::spawn::spawn_rt;
+
 pub fn spawn<F, T>(f: F) -> JoinHandle<T>
     where F: FnOnce() -> T,
           F: panic::UnwindSafe,

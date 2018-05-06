@@ -1,13 +1,12 @@
-use libc::{c_uint, c_int, waitpid, WUNTRACED, pid_t, raise, fork, SIGSTOP,
-           ptrace, syscall, SYS_gettid, PTRACE_SINGLESTEP,
-           PTRACE_O_TRACECLONE, PTRACE_TRACEME, PTRACE_ATTACH, PTRACE_CONT,
-           PTRACE_SETOPTIONS, PTRACE_O_TRACESYSGOOD};
+use libc::{PTRACE_ATTACH, PTRACE_CONT, PTRACE_O_TRACECLONE,
+           PTRACE_O_TRACESYSGOOD, PTRACE_SETOPTIONS, PTRACE_SINGLESTEP,
+           PTRACE_TRACEME, SIGSTOP, SYS_gettid, WUNTRACED, c_int, c_uint,
+           fork, pid_t, ptrace, raise, syscall, waitpid};
 use std::io::Error;
 use std::path::Path;
 
 fn tracee<F>(f: F)
-where
-    F: Fn() -> (),
+    where F: Fn() -> ()
 {
     unsafe {
         ptrace(PTRACE_TRACEME, 0, 0, 0);
@@ -61,8 +60,7 @@ fn tracer(child: pid_t) {
 }
 
 fn serialize<F>(f: F)
-where
-    F: Fn() -> (),
+    where F: Fn() -> ()
 {
     let child = unsafe { fork() };
     if child == 0 { tracee(f) } else { tracer(child) }

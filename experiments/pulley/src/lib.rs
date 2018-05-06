@@ -1,8 +1,8 @@
 extern crate rand;
 
-use rand::{Rng, StdRng, SeedableRng};
+use rand::{Rng, SeedableRng, StdRng};
 use std::cell::RefCell;
-use std::sync::mpsc::{SyncSender, Receiver, sync_channel};
+use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
 
 thread_local! {
     pub static HANDLE: RefCell<Option<Handle>> = RefCell::new(None);
@@ -94,8 +94,7 @@ pub struct Scheduler<State> {
 }
 
 impl<State> Scheduler<State>
-where
-    State: 'static,
+    where State: 'static
 {
     pub fn with_initializer(f: fn() -> State) -> Scheduler<State> {
         Scheduler {

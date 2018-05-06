@@ -5,3 +5,4 @@ authors = ["Tyler Neely <t@jujit.su>"]
 
 [dependencies]
 libc = "0.2"
+rand = "0.4"
