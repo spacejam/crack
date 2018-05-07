@@ -80,11 +80,16 @@ pub fn register_scheduler(sender: SyncSender<Call>) {
     with_context(move |c| c.scheduler = Some(sender));
 }
 
-impl Rng for Context {
+pub struct Rand;
+
+impl Rng for Rand {
     fn next_u32(&mut self) -> u32 {
-        let mut context = self.0.lock().unwrap();
-        context.rng.next_u32()
+        with_context(|c| c.rng.next_u32())
     }
+}
+
+pub fn thread_rng() -> Rand {
+    Rand
 }
 
 impl Default for ContextInner {

@@ -116,3 +116,34 @@ fn ensure_context_is_inherited() {
 
     assert_eq!(time, child_time);
 }
+
+#[test]
+fn gogogo() {
+    fn f1() {
+        for _ in 0..10 {
+            println!("1");
+        }
+    }
+    fn f2() {
+        for _ in 0..10 {
+            println!("2");
+        }
+    }
+    fn f3() {
+        for _ in 0..10 {
+            println!("3");
+        }
+    }
+
+    prioritize(4);
+
+    let threads = vec![
+        spawn_with_prio(3, f1),
+        spawn_with_prio(2, f2),
+        spawn_with_prio(1, f3),
+    ];
+
+    for t in threads.into_iter() {
+        t.join().unwrap();
+    }
+}
